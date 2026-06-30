@@ -23,3 +23,9 @@ local_settings.py
 # IDE
 .idea/
 .vscode/
+# Test and lint artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
