@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from profiles_app.models import UserProfile
+
 
 @pytest.mark.django_db
 def test_registration_creates_customer_user_and_returns_token():
@@ -23,6 +25,8 @@ def test_registration_creates_customer_user_and_returns_token():
     assert response.data['email'] == payload['email']
     assert response.data['user_id']
     assert response.data['token']
+    profile = UserProfile.objects.get(user_id=response.data['user_id'])
+    assert profile.type == UserProfile.ProfileType.CUSTOMER
 
 
 @pytest.mark.django_db

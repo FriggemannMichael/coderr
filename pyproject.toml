@@ -55,8 +55,12 @@ ignore = [
 [tool.ruff.lint.pylint]
 max-statements = 14
 
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["PLR0915"]
+"**/*_tests.py" = ["PLR0915"]
+"**/tests.py" = ["PLR0915"]
+
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
 line-ending = "auto"
-
