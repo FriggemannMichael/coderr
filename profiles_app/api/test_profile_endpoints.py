@@ -200,3 +200,121 @@ def test_authenticated_user_can_upload_profile_file(settings, tmp_path):
 
     assert response.status_code == 200
     assert response.data['file']
+
+
+@pytest.mark.django_db
+def test_authenticated_user_can_get_business_profile_list():
+    business_user = get_user_model().objects.create_user(
+        username='business_user',
+        email='business@example.com',
+        password='StrongPass123!',
+    )
+    UserProfile.objects.create(
+        user=business_user,
+        type=UserProfile.ProfileType.BUSINESS,
+    )
+    customer_user = get_user_model().objects.create_user(
+        username='customer_user',
+        email='customer@example.com',
+        password='StrongPass123!',
+    )
+    UserProfile.objects.create(
+        user=customer_user,
+        type=UserProfile.ProfileType.CUSTOMER,
+    )
+    token, _ = Token.objects.get_or_create(user=business_user)
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+    url = reverse('business-profiles')
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['user'] == business_user.id
+    assert response.data[0]['username'] == business_user.username
+    assert response.data[0]['type'] == UserProfile.ProfileType.BUSINESS
+    assert response.data[0]['first_name'] == ''
+    assert response.data[0]['last_name'] == ''
+    assert response.data[0]['location'] == ''
+    assert response.data[0]['tel'] == ''
+    assert response.data[0]['description'] == ''
+    assert response.data[0]['working_hours'] == ''
+
+
+@pytest.mark.django_db
+def test_business_profile_list_requires_authentication():
+    user = get_user_model().objects.create_user(
+        username='business_user',
+        email='business@example.com',
+        password='StrongPass123!',
+    )
+    UserProfile.objects.create(
+        user=user,
+        type=UserProfile.ProfileType.BUSINESS,
+    )
+    client = APIClient()
+    url = reverse('business-profiles')
+
+    response = client.get(url)
+
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_authenticated_user_can_get_customer_profile_list():
+    business_user = get_user_model().objects.create_user(
+        username='business_user',
+        email='business@example.com',
+        password='StrongPass123!',
+    )
+    UserProfile.objects.create(
+        user=business_user,
+        type=UserProfile.ProfileType.BUSINESS,
+    )
+    customer_user = get_user_model().objects.create_user(
+        username='customer_user',
+        email='customer@example.com',
+        password='StrongPass123!',
+    )
+    UserProfile.objects.create(
+        user=customer_user,
+        type=UserProfile.ProfileType.CUSTOMER,
+    )
+    token, _ = Token.objects.get_or_create(user=customer_user)
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+    url = reverse('customer-profiles')
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['user'] == customer_user.id
+    assert response.data[0]['username'] == customer_user.username
+    assert response.data[0]['type'] == UserProfile.ProfileType.CUSTOMER
+    assert response.data[0]['first_name'] == ''
+    assert response.data[0]['last_name'] == ''
+    assert response.data[0]['location'] == ''
+    assert response.data[0]['tel'] == ''
+    assert response.data[0]['description'] == ''
+    assert response.data[0]['working_hours'] == ''
+
+
+@pytest.mark.django_db
+def test_customer_profile_list_requires_authentication():
+    user = get_user_model().objects.create_user(
+        username='customer_user',
+        email='customer@example.com',
+        password='StrongPass123!',
+    )
+    UserProfile.objects.create(
+        user=user,
+        type=UserProfile.ProfileType.CUSTOMER,
+    )
+    client = APIClient()
+    url = reverse('customer-profiles')
+
+    response = client.get(url)
+
+    assert response.status_code == 401

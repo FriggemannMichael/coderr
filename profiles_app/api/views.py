@@ -31,3 +31,27 @@ class ProfileDetailView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class BusinessProfileListView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
+
+    def get(self, request):
+        profiles = UserProfile.objects.filter(
+            type=UserProfile.ProfileType.BUSINESS,
+        )
+        serializer = self.serializer_class(profiles, many=True)
+        return Response(serializer.data)
+
+
+class CustomerProfileListView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
+
+    def get(self, request):
+        profiles = UserProfile.objects.filter(
+            type=UserProfile.ProfileType.CUSTOMER,
+        )
+        serializer = self.serializer_class(profiles, many=True)
+        return Response(serializer.data)
