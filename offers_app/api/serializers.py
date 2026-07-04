@@ -75,7 +75,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
     def get_min_price(self, obj):
         prices = [detail.price for detail in obj.details.all()]
-        return f'{min(prices):.2f}' if prices else None
+        return float(min(prices)) if prices else None
 
     def get_min_delivery_time(self, obj):
         times = [detail.delivery_time_in_days for detail in obj.details.all()]

@@ -196,7 +196,7 @@ def test_offer_create_returns_min_price_and_min_delivery_time():
     )
 
     assert response.status_code == 201
-    assert response.data['min_price'] == '50.00'
+    assert response.data['min_price'] == 50.0
     assert response.data['min_delivery_time'] == 3
 
 
