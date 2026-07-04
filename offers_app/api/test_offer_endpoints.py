@@ -249,6 +249,30 @@ def test_authenticated_user_can_get_offer_detail_data():
 
 
 @pytest.mark.django_db
+def test_offer_detail_data_requires_authentication():
+    user = create_user()
+    offer = create_offer_with_details(user)
+    detail = offer.details.get(offer_type='basic')
+
+    response = APIClient().get(
+        reverse('offerdetail-detail', kwargs={'pk': detail.id}),
+    )
+
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_unknown_offer_detail_data_returns_404():
+    user = create_user()
+
+    response = authenticated_client(user).get(
+        reverse('offerdetail-detail', kwargs={'pk': 999999}),
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_business_user_cannot_update_another_users_offer():
     owner = create_user('owner_user')
     other_user = create_user('other_business_user')
@@ -278,6 +302,47 @@ def test_business_user_can_update_own_offer():
     assert response.status_code == 200
     assert response.data['title'] == 'Updated Logo Design'
     assert offer.title == 'Updated Logo Design'
+
+
+@pytest.mark.django_db
+def test_offer_update_requires_authentication():
+    user = create_user()
+    offer = create_offer_with_details(user)
+
+    response = APIClient().patch(
+        reverse('offer-detail', kwargs={'pk': offer.id}),
+        data={'title': 'Changed Title'},
+        format='json',
+    )
+
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_unknown_offer_update_returns_404():
+    user = create_user()
+
+    response = authenticated_client(user).patch(
+        reverse('offer-detail', kwargs={'pk': 999999}),
+        data={'title': 'Changed Title'},
+        format='json',
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_offer_update_invalid_data_returns_400():
+    user = create_user()
+    offer = create_offer_with_details(user)
+
+    response = authenticated_client(user).patch(
+        reverse('offer-detail', kwargs={'pk': offer.id}),
+        data={'details': [{'offer_type': 'basic', 'revisions': 'abc'}]},
+        format='json',
+    )
+
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
@@ -316,6 +381,27 @@ def test_business_user_can_delete_own_offer():
 
 
 @pytest.mark.django_db
+def test_offer_delete_requires_authentication():
+    user = create_user()
+    offer = create_offer_with_details(user)
+
+    response = APIClient().delete(reverse('offer-detail', kwargs={'pk': offer.id}))
+
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_unknown_offer_delete_returns_404():
+    user = create_user()
+
+    response = authenticated_client(user).delete(
+        reverse('offer-detail', kwargs={'pk': 999999}),
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_customer_user_can_get_offer_list():
     business_user = create_user('business_user')
     customer_user = create_user('customer_user', UserProfile.ProfileType.CUSTOMER)
@@ -339,6 +425,27 @@ def test_customer_user_can_get_offer_detail():
 
     assert response.status_code == 200
     assert response.data['id'] == offer.id
+
+
+@pytest.mark.django_db
+def test_offer_detail_requires_authentication():
+    user = create_user()
+    offer = create_offer_with_details(user)
+
+    response = APIClient().get(reverse('offer-detail', kwargs={'pk': offer.id}))
+
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_unknown_offer_detail_returns_404():
+    user = create_user()
+
+    response = authenticated_client(user).get(
+        reverse('offer-detail', kwargs={'pk': 999999}),
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -565,6 +672,22 @@ def test_business_user_cannot_create_offer_without_details():
         'title': 'Logo Design',
         'description': 'Professional logo package',
     }
+
+    response = authenticated_client(user).post(
+        reverse('offer-list'),
+        data=payload,
+        format='json',
+    )
+
+    assert response.status_code == 400
+    assert 'details' in response.data
+
+
+@pytest.mark.django_db
+def test_business_user_cannot_create_offer_with_negative_delivery_time():
+    user = create_user()
+    payload = offer_payload()
+    payload['details'][0]['delivery_time_in_days'] = -1
 
     response = authenticated_client(user).post(
         reverse('offer-list'),
