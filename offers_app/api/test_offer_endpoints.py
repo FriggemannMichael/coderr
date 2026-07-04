@@ -312,3 +312,246 @@ def test_business_user_can_delete_own_offer():
 
     assert response.status_code == 204
     assert not Offer.objects.filter(id=offer.id).exists()
+
+
+@pytest.mark.django_db
+def test_customer_user_can_get_offer_list():
+    business_user = create_user('business_user')
+    customer_user = create_user('customer_user', UserProfile.ProfileType.CUSTOMER)
+    offer = create_offer_with_details(business_user)
+
+    response = authenticated_client(customer_user).get(reverse('offer-list'))
+
+    assert response.status_code == 200
+    assert response.data['results'][0]['id'] == offer.id
+
+
+@pytest.mark.django_db
+def test_customer_user_can_get_offer_detail():
+    business_user = create_user('business_user')
+    customer_user = create_user('customer_user', UserProfile.ProfileType.CUSTOMER)
+    offer = create_offer_with_details(business_user)
+
+    response = authenticated_client(customer_user).get(
+        reverse('offer-detail', kwargs={'pk': offer.id}),
+    )
+
+    assert response.status_code == 200
+    assert response.data['id'] == offer.id
+
+
+@pytest.mark.django_db
+def test_offer_detail_collection_endpoint_is_not_available():
+    user = create_user()
+
+    response = authenticated_client(user).get('/api/offerdetails/')
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_authenticated_user_cannot_modify_offer_detail_directly():
+    user = create_user()
+    offer = Offer.objects.create(
+        user=user,
+        title='Logo Design',
+        description='Professional logo package',
+    )
+    detail = OfferDetail.objects.create(
+        offer=offer,
+        title='Basic Logo',
+        revisions=1,
+        delivery_time_in_days=3,
+        price='50.00',
+        features=['one concept'],
+        offer_type='basic',
+    )
+    url = reverse('offerdetail-detail', kwargs={'pk': detail.id})
+    client = authenticated_client(user)
+
+    patch_response = client.patch(url, data={'title': 'Changed'}, format='json')
+    delete_response = client.delete(url)
+
+    assert patch_response.status_code == 405
+    assert delete_response.status_code == 405
+
+
+@pytest.mark.django_db
+def test_business_user_can_update_single_offer_detail_by_type():
+    user = create_user()
+    offer = create_offer_with_details(user)
+    basic_detail = offer.details.get(offer_type='basic')
+    payload = {
+        'details': [
+            {
+                'title': 'Basic Logo Updated',
+                'revisions': 2,
+                'offer_type': 'basic',
+            },
+        ],
+    }
+
+    response = authenticated_client(user).patch(
+        reverse('offer-detail', kwargs={'pk': offer.id}),
+        data=payload,
+        format='json',
+    )
+
+    basic_detail.refresh_from_db()
+    assert response.status_code == 200
+    assert basic_detail.title == 'Basic Logo Updated'
+    assert basic_detail.revisions == 2
+
+
+@pytest.mark.django_db
+def test_offer_list_response_is_paginated():
+    user = create_user()
+    create_offer_with_details(user, 'Logo Design', 50, 3)
+
+    response = APIClient().get(reverse('offer-list'))
+
+    assert response.status_code == 200
+    assert set(response.data) == {'count', 'next', 'previous', 'results'}
+
+
+@pytest.mark.django_db
+def test_offer_list_contains_user_details():
+    user = create_user('business_user', first_name='Max', last_name='Mustermann')
+    create_offer_with_details(user, 'Logo Design', 50, 3)
+
+    response = APIClient().get(reverse('offer-list'))
+
+    assert response.status_code == 200
+    assert response.data['results'][0]['user_details'] == {
+        'first_name': 'Max',
+        'last_name': 'Mustermann',
+        'username': 'business_user',
+    }
+
+
+@pytest.mark.django_db
+def test_offer_list_filters_by_creator_id():
+    first_user = create_user('first_business_user')
+    second_user = create_user('second_business_user')
+    matching_offer = create_offer_with_details(first_user, 'Logo Design', 50, 3)
+    create_offer_with_details(second_user, 'Website Design', 100, 5)
+    url = f'{reverse("offer-list")}?creator_id={first_user.id}'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['count'] == 1
+    assert response.data['results'][0]['id'] == matching_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_filters_by_min_price():
+    user = create_user()
+    create_offer_with_details(user, 'Cheap Logo', 50, 3)
+    matching_offer = create_offer_with_details(user, 'Website Design', 120, 5)
+    url = f'{reverse("offer-list")}?min_price=100'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['count'] == 1
+    assert response.data['results'][0]['id'] == matching_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_filters_by_max_delivery_time():
+    user = create_user()
+    matching_offer = create_offer_with_details(user, 'Fast Logo', 50, 3)
+    create_offer_with_details(user, 'Slow Website', 100, 7)
+    url = f'{reverse("offer-list")}?max_delivery_time=5'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['count'] == 1
+    assert response.data['results'][0]['id'] == matching_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_orders_by_min_price():
+    user = create_user()
+    expensive_offer = create_offer_with_details(user, 'Website Design', 150, 7)
+    cheap_offer = create_offer_with_details(user, 'Logo Design', 50, 3)
+    url = f'{reverse("offer-list")}?ordering=min_price'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['results'][0]['id'] == cheap_offer.id
+    assert response.data['results'][1]['id'] == expensive_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_orders_by_updated_at():
+    user = create_user()
+    first_offer = create_offer_with_details(user, 'Logo Design', 50, 3)
+    second_offer = create_offer_with_details(user, 'Website Design', 150, 7)
+    url = f'{reverse("offer-list")}?ordering=updated_at'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['results'][0]['id'] == first_offer.id
+    assert response.data['results'][1]['id'] == second_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_search_matches_title():
+    user = create_user()
+    matching_offer = create_offer_with_details(user, 'Logo Design', 50, 3)
+    create_offer_with_details(user, 'Website Build', 150, 7)
+    url = f'{reverse("offer-list")}?search=logo'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['count'] == 1
+    assert response.data['results'][0]['id'] == matching_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_search_matches_description():
+    user = create_user()
+    matching_offer = create_offer_with_details(user, 'Logo Design', 50, 3)
+    matching_offer.description = 'Custom brand identity package'
+    matching_offer.save(update_fields=['description'])
+    create_offer_with_details(user, 'Website Build', 150, 7)
+    url = f'{reverse("offer-list")}?search=identity'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 200
+    assert response.data['count'] == 1
+    assert response.data['results'][0]['id'] == matching_offer.id
+
+
+@pytest.mark.django_db
+def test_offer_list_invalid_creator_id_returns_400():
+    url = f'{reverse("offer-list")}?creator_id=abc'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_offer_list_invalid_min_price_returns_400():
+    url = f'{reverse("offer-list")}?min_price=abc'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_offer_list_invalid_max_delivery_time_returns_400():
+    url = f'{reverse("offer-list")}?max_delivery_time=abc'
+
+    response = APIClient().get(url)
+
+    assert response.status_code == 400
