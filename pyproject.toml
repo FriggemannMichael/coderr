@@ -5,7 +5,9 @@ testpaths = ["."]
 addopts = [
     "--strict-markers",
     "--strict-config",
+    "-rxX",
     "--cov=.",
+    "--cov-branch",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
