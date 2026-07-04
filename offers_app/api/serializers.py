@@ -81,6 +81,15 @@ class OfferSerializer(serializers.ModelSerializer):
         times = [detail.delivery_time_in_days for detail in obj.details.all()]
         return min(times) if times else None
 
+    def validate(self, attrs):
+        if self.instance is None and 'details' not in attrs:
+            raise serializers.ValidationError(
+                {
+                    'details': 'This field is required.',
+                }
+            )
+        return super().validate(attrs)
+
     def validate_details(self, value):
         if self.instance is not None:
             return self._validate_update_details(value)
@@ -102,7 +111,7 @@ class OfferSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        details_data = validated_data.pop('details')
+        details_data = validated_data.pop('details', None)
         offer = Offer.objects.create(
             user=self.context['request'].user,
             **validated_data,
