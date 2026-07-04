@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
@@ -573,3 +574,49 @@ def test_business_user_cannot_create_offer_without_details():
 
     assert response.status_code == 400
     assert 'details' in response.data
+
+
+@pytest.mark.django_db
+def test_business_user_can_upload_offer_image(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    user = create_user()
+    offer = create_offer_with_details(user)
+    uploaded_file = SimpleUploadedFile(
+        'offer.gif',
+        (
+            b'GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00'
+            b'\xff\xff\xff,\x00\x00\x00\x00\x01\x00\x01\x00'
+            b'\x00\x02\x02D\x01\x00;'
+        ),
+        content_type='image/gif',
+    )
+
+    response = authenticated_client(user).patch(
+        reverse('offer-detail', kwargs={'pk': offer.id}),
+        data={'image': uploaded_file},
+        format='multipart',
+    )
+
+    assert response.status_code == 200
+    assert response.data['image']
+
+
+@pytest.mark.django_db
+def test_business_user_cannot_upload_invalid_offer_image(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    user = create_user()
+    offer = create_offer_with_details(user)
+    uploaded_file = SimpleUploadedFile(
+        'offer.txt',
+        b'not an image',
+        content_type='text/plain',
+    )
+
+    response = authenticated_client(user).patch(
+        reverse('offer-detail', kwargs={'pk': offer.id}),
+        data={'image': uploaded_file},
+        format='multipart',
+    )
+
+    assert response.status_code == 400
+    assert 'image' in response.data
