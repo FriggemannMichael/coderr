@@ -3,6 +3,8 @@ from django.db import models
 
 
 class Order(models.Model):
+    """Represent a customer order created from an offer detail."""
+
     class Status(models.TextChoices):
         IN_PROGRESS = 'in_progress', 'In progress'
         COMPLETED = 'completed', 'Completed'

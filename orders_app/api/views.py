@@ -12,6 +12,8 @@ from .serializers import OrderSerializer
 
 
 class OrderViewSet(ModelViewSet):
+    """Provide list, create, status update, and delete for orders."""
+
     serializer_class = OrderSerializer
 
     def get_queryset(self):

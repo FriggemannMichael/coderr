@@ -6,6 +6,8 @@ from orders_app.models import Order
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    """Serialize orders and create them from an offer detail."""
+
     price = serializers.SerializerMethodField()
     offer_detail_id = serializers.IntegerField(write_only=True)
 

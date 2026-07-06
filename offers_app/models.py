@@ -4,6 +4,8 @@ from django.db import models
 
 
 class Offer(models.Model):
+    """Represent an offer created by a business user."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -20,6 +22,8 @@ class Offer(models.Model):
 
 
 class OfferDetail(models.Model):
+    """Represent one pricing tier (basic/standard/premium) of an offer."""
+
     class OfferType(models.TextChoices):
         BASIC = 'basic', 'Basic'
         STANDARD = 'standard', 'Standard'
