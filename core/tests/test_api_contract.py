@@ -52,24 +52,18 @@ DOCUMENTED_ENDPOINTS = [
     pytest.param('PATCH', '/api/offers/1/', id='PATCH /api/offers/{id}/'),
     pytest.param('DELETE', '/api/offers/1/', id='DELETE /api/offers/{id}/'),
     pytest.param('GET', '/api/offerdetails/1/', id='GET /api/offerdetails/{id}/'),
-    pytest.param('GET', '/api/orders/', marks=_missing(), id='GET /api/orders/'),
-    pytest.param('POST', '/api/orders/', marks=_missing(), id='POST /api/orders/'),
-    pytest.param(
-        'PATCH', '/api/orders/1/', marks=_missing(), id='PATCH /api/orders/{id}/'
-    ),
-    pytest.param(
-        'DELETE', '/api/orders/1/', marks=_missing(), id='DELETE /api/orders/{id}/'
-    ),
+    pytest.param('GET', '/api/orders/', id='GET /api/orders/'),
+    pytest.param('POST', '/api/orders/', id='POST /api/orders/'),
+    pytest.param('PATCH', '/api/orders/1/', id='PATCH /api/orders/{id}/'),
+    pytest.param('DELETE', '/api/orders/1/', id='DELETE /api/orders/{id}/'),
     pytest.param(
         'GET',
         '/api/order-count/1/',
-        marks=_missing(),
         id='GET /api/order-count/{business_user_id}/',
     ),
     pytest.param(
         'GET',
         '/api/completed-order-count/1/',
-        marks=_missing(),
         id='GET /api/completed-order-count/{business_user_id}/',
     ),
     pytest.param('GET', '/api/reviews/', marks=_missing(), id='GET /api/reviews/'),
