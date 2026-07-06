@@ -4,6 +4,8 @@ from profiles_app.models import UserProfile
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """Serialize profile data including related user fields."""
+
     user = serializers.IntegerField(source='user.id')
     username = serializers.CharField(source='user.username')
     email = serializers.EmailField(source='user.email')

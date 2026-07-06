@@ -10,6 +10,8 @@ from .serializers import UserProfileSerializer
 
 
 class ProfileDetailView(APIView):
+    """Retrieve or update a single user profile."""
+
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
@@ -34,6 +36,8 @@ class ProfileDetailView(APIView):
 
 
 class BusinessProfileListView(APIView):
+    """List all business user profiles."""
+
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
@@ -46,6 +50,8 @@ class BusinessProfileListView(APIView):
 
 
 class CustomerProfileListView(APIView):
+    """List all customer user profiles."""
+
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 

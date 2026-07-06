@@ -5,6 +5,8 @@ from profiles_app.models import UserProfile
 
 
 class RegistrationSerializer(serializers.Serializer):
+    """Validate registration input and create a user with a profile."""
+
     username = serializers.CharField()
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -32,6 +34,8 @@ class RegistrationSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    """Validate credentials and expose the authenticated user."""
+
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
