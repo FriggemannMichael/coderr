@@ -66,14 +66,10 @@ DOCUMENTED_ENDPOINTS = [
         '/api/completed-order-count/1/',
         id='GET /api/completed-order-count/{business_user_id}/',
     ),
-    pytest.param('GET', '/api/reviews/', marks=_missing(), id='GET /api/reviews/'),
-    pytest.param('POST', '/api/reviews/', marks=_missing(), id='POST /api/reviews/'),
-    pytest.param(
-        'PATCH', '/api/reviews/1/', marks=_missing(), id='PATCH /api/reviews/{id}/'
-    ),
-    pytest.param(
-        'DELETE', '/api/reviews/1/', marks=_missing(), id='DELETE /api/reviews/{id}/'
-    ),
+    pytest.param('GET', '/api/reviews/', id='GET /api/reviews/'),
+    pytest.param('POST', '/api/reviews/', id='POST /api/reviews/'),
+    pytest.param('PATCH', '/api/reviews/1/', id='PATCH /api/reviews/{id}/'),
+    pytest.param('DELETE', '/api/reviews/1/', id='DELETE /api/reviews/{id}/'),
     pytest.param('GET', '/api/base-info/', marks=_missing(), id='GET /api/base-info/'),
 ]
 
