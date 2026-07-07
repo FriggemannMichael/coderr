@@ -6,7 +6,11 @@ from rest_framework.views import APIView
 
 from profiles_app.models import UserProfile
 
-from .serializers import UserProfileSerializer
+from .serializers import (
+    CustomerProfileListSerializer,
+    UserProfileListSerializer,
+    UserProfileSerializer,
+)
 
 
 class ProfileDetailView(APIView):
@@ -39,7 +43,7 @@ class BusinessProfileListView(APIView):
     """List all business user profiles."""
 
     permission_classes = [IsAuthenticated]
-    serializer_class = UserProfileSerializer
+    serializer_class = UserProfileListSerializer
 
     def get(self, request):
         profiles = UserProfile.objects.filter(
@@ -53,7 +57,7 @@ class CustomerProfileListView(APIView):
     """List all customer user profiles."""
 
     permission_classes = [IsAuthenticated]
-    serializer_class = UserProfileSerializer
+    serializer_class = CustomerProfileListSerializer
 
     def get(self, request):
         profiles = UserProfile.objects.filter(
