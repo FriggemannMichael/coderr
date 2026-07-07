@@ -1,24 +1,38 @@
 # Coderr Backend
 
-Coderr is a Django REST Framework backend project. The repository currently contains the base Django project configuration, API documentation, and project delivery checklists.
+Coderr is the backend for a freelance service marketplace. **Business** users
+publish *offers* (service packages with basic, standard, and premium tiers),
+**customer** users place *orders* based on those offers and leave *reviews*, and
+the platform exposes aggregated statistics for its landing page.
 
-## Project Status
+It is a Django REST Framework API with token authentication, built to be
+consumed by the Coderr frontend.
 
-The project is in its initial backend setup phase.
+## Features
 
-Current structure:
+- **Authentication** — registration and login returning an auth token; users
+  register as either a `customer` or a `business` account.
+- **Profiles** — retrieve and update user profiles; list business and customer
+  profiles.
+- **Offers** — business users create offers with three detail tiers
+  (basic/standard/premium); public, paginated listing with filtering, search,
+  and ordering.
+- **Orders** — customers create orders from an offer detail; business users
+  update order status; order counters per business user.
+- **Reviews** — customers review business users (one review per business),
+  editable and deletable by their author.
+- **Base info** — aggregated platform statistics (review count, average rating,
+  business profile count, offer count).
 
-- `core/` - Django project configuration
-- `manage.py` - Django management entry point
-- `requirements.txt` - Python dependencies
-- `docs/checkliste.md` - project delivery checklist
-- `docs/endpoints.md` - required API endpoint documentation
+The full endpoint reference lives in [docs/endpoints.md](docs/endpoints.md).
 
-## Requirements
+## Tech stack
 
 - Python 3.12 or newer
-- pip
-- Virtual environment support
+- Django and Django REST Framework
+- DRF token authentication
+- SQLite for local development
+- Ruff (lint and format) and pytest (tests and coverage)
 
 ## Setup
 
@@ -52,7 +66,7 @@ Apply database migrations:
 .venv\Scripts\python.exe manage.py migrate
 ```
 
-Create an admin user:
+Create an admin user (optional, e.g. for the Django admin or order deletion):
 
 ```bash
 .venv\Scripts\python.exe manage.py createsuperuser
@@ -64,53 +78,42 @@ Run the development server:
 .venv\Scripts\python.exe manage.py runserver
 ```
 
-The local API is available at:
+The local API is available at `http://127.0.0.1:8000/`, and the Django admin at
+`http://127.0.0.1:8000/admin/`.
+
+## User types and authentication
+
+Coderr distinguishes two account types, chosen at registration via the `type`
+field:
+
+- **customer** — can place orders and write reviews.
+- **business** — can publish offers and update order statuses.
+
+Authenticated requests send the token returned by registration or login in the
+`Authorization` header:
 
 ```text
-http://127.0.0.1:8000/
+Authorization: Token <your-token>
 ```
 
-The Django admin is available at:
+Deleting an order is restricted to staff users. A token for an existing staff
+user can be created with:
 
-```text
-http://127.0.0.1:8000/admin/
+```bash
+.venv\Scripts\python.exe manage.py drf_create_token <username>
 ```
 
-## API Documentation
+## Project structure
 
-The required endpoints are documented in:
+- `core/` — Django project configuration and the base-info endpoint
+- `auth_app/` — registration and login
+- `profiles_app/` — user profiles
+- `offers_app/` — offers and offer details
+- `orders_app/` — orders and order counters
+- `reviews_app/` — reviews and ratings
+- `docs/` — endpoint reference and delivery checklist
 
-[docs/endpoints.md](docs/endpoints.md)
-
-Each endpoint entry contains the expected method, path, request body, response body, status codes, permissions, and implementation checkbox.
-
-## Delivery Checklist
-
-The project requirements and definition of done are documented in:
-
-[docs/checkliste.md](docs/checkliste.md)
-
-Important requirements include:
-
-- All endpoints must match the provided documentation.
-- The final project should reach at least 95% test coverage in the project management tests.
-- Code must be PEP8-compliant.
-- Functions and methods should have one responsibility and stay concise.
-- The backend must remain in its own repository without frontend code.
-- The database file must not be committed.
-
-## Development Notes
-
-This project uses:
-
-- Django
-- Django REST Framework
-- DRF token authentication
-- SQLite for local development
-
-The local database file `db.sqlite3` is ignored by Git and must not be uploaded to the repository.
-
-## Running Checks
+## Running checks
 
 Run Django's built-in checks:
 
@@ -118,19 +121,14 @@ Run Django's built-in checks:
 .venv\Scripts\python.exe manage.py check
 ```
 
-Run the linter:
+Run the linter and formatting check:
 
 ```bash
 .venv\Scripts\python.exe -m ruff check .
-```
-
-Check formatting:
-
-```bash
 .venv\Scripts\python.exe -m ruff format . --check
 ```
 
-Run tests with coverage:
+Run the tests with coverage:
 
 ```bash
 .venv\Scripts\python.exe -m pytest
@@ -138,15 +136,24 @@ Run tests with coverage:
 
 The coverage threshold is configured at 95% in `pyproject.toml`.
 
-## Repository Hygiene
+## Delivery checklist
 
-Do not commit:
+The project requirements and definition of done are documented in
+[docs/checkliste.md](docs/checkliste.md). Key requirements:
+
+- All endpoints match the provided documentation.
+- The project reaches at least 95% coverage in the project management tests.
+- Code is PEP8-compliant; functions and methods keep a single responsibility.
+- The backend stays in its own repository without frontend code.
+- The database file is never committed.
+
+## Repository hygiene
+
+The local database file `db.sqlite3` is ignored by Git and must not be uploaded.
+The following are not committed:
 
 - `.env`
-- `.venv/`
-- `venv/`
+- `.venv/` and `venv/`
 - `db.sqlite3`
-- `media/`
-- `staticfiles/`
-- IDE settings
-- local settings files
+- `media/` and `staticfiles/`
+- IDE and local settings files
