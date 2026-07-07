@@ -103,7 +103,11 @@ class OfferViewSet(ModelViewSet):
             'min_price': 'min_price_value',
             '-min_price': '-min_price_value',
         }
-        return queryset.order_by(allowed_fields.get(ordering, '-updated_at'))
+        if ordering in [None, '']:
+            return queryset.order_by('-updated_at')
+        if ordering not in allowed_fields:
+            raise ValidationError({'ordering': 'Unsupported ordering field.'})
+        return queryset.order_by(allowed_fields[ordering])
 
     def _get_int_param(self, name):
         value = self.request.query_params.get(name)

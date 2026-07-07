@@ -7,6 +7,8 @@ from offers_app.models import Offer, OfferDetail
 class OfferDetailSerializer(serializers.ModelSerializer):
     """Serialize full offer detail data for writes and detail retrieval."""
 
+    price = serializers.FloatField()
+
     class Meta:
         model = OfferDetail
         fields = [
@@ -21,7 +23,7 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 
 
 class OfferDetailLinkSerializer(serializers.ModelSerializer):
-    """Serialize offer detail references for offer list and detail responses."""
+    """Serialize offer detail references for offer detail responses."""
 
     url = serializers.SerializerMethodField()
 
@@ -33,7 +35,25 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
         ]
 
     def get_url(self, obj):
-        return reverse('offerdetail-detail', kwargs={'pk': obj.id})
+        url = reverse('offerdetail-detail', kwargs={'pk': obj.id})
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
+
+
+class OfferListDetailLinkSerializer(serializers.ModelSerializer):
+    """Serialize offer detail references for offer list responses."""
+
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OfferDetail
+        fields = [
+            'id',
+            'url',
+        ]
+
+    def get_url(self, obj):
+        return f'/offerdetails/{obj.id}/'
 
 
 class UserDetailsSerializer(serializers.Serializer):
@@ -45,42 +65,23 @@ class UserDetailsSerializer(serializers.Serializer):
 
 
 class OfferSerializer(serializers.ModelSerializer):
-    """Serialize offer writes with nested details and computed summary fields."""
+    """Serialize offer writes with nested details."""
 
     details = OfferDetailSerializer(many=True, required=False)
-    min_price = serializers.SerializerMethodField()
-    min_delivery_time = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Offer
         fields = [
             'id',
-            'user',
             'title',
-            'description',
             'image',
+            'description',
             'details',
-            'min_price',
-            'min_delivery_time',
-            'created_at',
-            'updated_at',
         ]
         read_only_fields = [
             'id',
-            'user',
-            'min_price',
-            'min_delivery_time',
-            'created_at',
-            'updated_at',
         ]
-
-    def get_min_price(self, obj):
-        prices = [detail.price for detail in obj.details.all()]
-        return float(min(prices)) if prices else None
-
-    def get_min_delivery_time(self, obj):
-        times = [detail.delivery_time_in_days for detail in obj.details.all()]
-        return min(times) if times else None
 
     def validate(self, attrs):
         if self.instance is None and 'details' not in attrs:
@@ -104,15 +105,23 @@ class OfferSerializer(serializers.ModelSerializer):
         return value
 
     def _validate_update_details(self, value):
+        existing_types = set(self.instance.details.values_list('offer_type', flat=True))
         for detail in value:
-            if 'offer_type' not in detail:
+            offer_type = detail.get('offer_type')
+            if offer_type is None:
                 raise serializers.ValidationError(
                     'Offer type is required to update a detail.',
+                )
+            if offer_type not in existing_types:
+                raise serializers.ValidationError(
+                    f'No detail with offer type "{offer_type}" exists for this offer.',
                 )
         return value
 
     def create(self, validated_data):
         details_data = validated_data.pop('details', None)
+        if 'image' in validated_data and validated_data['image'] is None:
+            validated_data['image'] = ''
         offer = Offer.objects.create(
             user=self.context['request'].user,
             **validated_data,
@@ -122,6 +131,8 @@ class OfferSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         details_data = validated_data.pop('details', [])
+        if 'image' in validated_data and validated_data['image'] is None:
+            validated_data['image'] = ''
         offer = super().update(instance, validated_data)
         self._update_details(offer, details_data)
         return offer
@@ -143,11 +154,37 @@ class OfferReadSerializer(OfferSerializer):
     """Serialize offers for read endpoints with linked details."""
 
     details = OfferDetailLinkSerializer(many=True)
+    min_price = serializers.SerializerMethodField()
+    min_delivery_time = serializers.SerializerMethodField()
+
+    class Meta(OfferSerializer.Meta):
+        fields = [
+            'id',
+            'user',
+            'title',
+            'image',
+            'description',
+            'created_at',
+            'updated_at',
+            'details',
+            'min_price',
+            'min_delivery_time',
+        ]
+        read_only_fields = fields
+
+    def get_min_price(self, obj):
+        prices = [detail.price for detail in obj.details.all()]
+        return float(min(prices)) if prices else None
+
+    def get_min_delivery_time(self, obj):
+        times = [detail.delivery_time_in_days for detail in obj.details.all()]
+        return min(times) if times else None
 
 
 class OfferListSerializer(OfferReadSerializer):
     """Serialize paginated offer list entries with compact creator details."""
 
+    details = OfferListDetailLinkSerializer(many=True)
     user_details = UserDetailsSerializer(source='user')
 
     class Meta(OfferReadSerializer.Meta):
