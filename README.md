@@ -8,6 +8,12 @@ the platform exposes aggregated statistics for its landing page.
 It is a Django REST Framework API with token authentication, built to be
 consumed by the Coderr frontend.
 
+## Live demo
+
+A running instance (frontend + API) is available at
+**https://coderr.friggemann.eu**. The API is served under the `/backend/` path
+(e.g. `https://coderr.friggemann.eu/backend/api/base-info/`).
+
 ## Features
 
 - **Authentication** — registration and login returning an auth token; users
