@@ -70,7 +70,7 @@ DOCUMENTED_ENDPOINTS = [
     pytest.param('POST', '/api/reviews/', id='POST /api/reviews/'),
     pytest.param('PATCH', '/api/reviews/1/', id='PATCH /api/reviews/{id}/'),
     pytest.param('DELETE', '/api/reviews/1/', id='DELETE /api/reviews/{id}/'),
-    pytest.param('GET', '/api/base-info/', marks=_missing(), id='GET /api/base-info/'),
+    pytest.param('GET', '/api/base-info/', id='GET /api/base-info/'),
 ]
 
 
