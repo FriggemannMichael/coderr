@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
@@ -15,7 +16,8 @@ class ReviewViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = Review.objects.select_related('business_user', 'reviewer')
         queryset = self._filter_by_business_user(queryset)
-        return self._filter_by_reviewer(queryset)
+        queryset = self._filter_by_reviewer(queryset)
+        return self._apply_ordering(queryset)
 
     def get_serializer_class(self):
         if self.action in ['update', 'partial_update']:
@@ -30,13 +32,36 @@ class ReviewViewSet(ModelViewSet):
         return [IsAuthenticated()]
 
     def _filter_by_business_user(self, queryset):
-        business_user_id = self.request.query_params.get('business_user_id')
-        if business_user_id:
+        business_user_id = self._get_int_param('business_user_id')
+        if business_user_id is not None:
             return queryset.filter(business_user_id=business_user_id)
         return queryset
 
     def _filter_by_reviewer(self, queryset):
-        reviewer_id = self.request.query_params.get('reviewer_id')
-        if reviewer_id:
+        reviewer_id = self._get_int_param('reviewer_id')
+        if reviewer_id is not None:
             return queryset.filter(reviewer_id=reviewer_id)
         return queryset
+
+    def _apply_ordering(self, queryset):
+        ordering = self.request.query_params.get('ordering')
+        allowed_fields = {
+            'updated_at': 'updated_at',
+            '-updated_at': '-updated_at',
+            'rating': 'rating',
+            '-rating': '-rating',
+        }
+        if ordering in [None, '']:
+            return queryset.order_by('-updated_at')
+        if ordering not in allowed_fields:
+            raise ValidationError({'ordering': 'Unsupported ordering field.'})
+        return queryset.order_by(allowed_fields[ordering])
+
+    def _get_int_param(self, name):
+        value = self.request.query_params.get(name)
+        if value in [None, '']:
+            return None
+        try:
+            return int(value)
+        except ValueError as error:
+            raise ValidationError({name: 'Must be an integer.'}) from error

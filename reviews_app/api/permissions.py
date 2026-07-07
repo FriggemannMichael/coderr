@@ -7,7 +7,10 @@ class IsCustomerUser(BasePermission):
     """Allow access only to authenticated customer users."""
 
     def has_permission(self, request, view):
-        return request.user.profile.type == UserProfile.ProfileType.CUSTOMER
+        return UserProfile.objects.filter(
+            user=request.user,
+            type=UserProfile.ProfileType.CUSTOMER,
+        ).exists()
 
 
 class IsReviewOwner(BasePermission):

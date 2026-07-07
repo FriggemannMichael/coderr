@@ -45,6 +45,15 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_price(self, obj):
         return float(obj.price)
 
+    def validate(self, attrs):
+        if self.instance is not None:
+            invalid_fields = set(self.initial_data) - {'status'}
+            if invalid_fields:
+                raise serializers.ValidationError(
+                    {field: 'This field cannot be updated.' for field in invalid_fields}
+                )
+        return super().validate(attrs)
+
     def create(self, validated_data):
         offer_detail = self._get_offer_detail(validated_data)
         return Order.objects.create(

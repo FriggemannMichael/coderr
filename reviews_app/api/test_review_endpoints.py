@@ -83,6 +83,28 @@ def test_business_user_cannot_create_review():
 
 
 @pytest.mark.django_db
+def test_user_without_profile_cannot_create_review():
+    user_without_profile = get_user_model().objects.create_user(
+        username='no_profile',
+        email='no_profile@example.com',
+        password='StrongPass123!',
+    )
+    business_user = create_user('business_user', UserProfile.ProfileType.BUSINESS)
+
+    response = authenticated_client(user_without_profile).post(
+        reverse('review-list'),
+        data={
+            'business_user': business_user.id,
+            'rating': 4,
+            'description': 'Alles war toll!',
+        },
+        format='json',
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_review_create_requires_authentication():
     business_user = create_user(
         'business_user',
@@ -262,6 +284,42 @@ def test_review_list_orders_by_updated_at():
     assert response.status_code == 200
     assert response.data[0]['id'] == first_review.id
     assert response.data[1]['id'] == second_review.id
+
+
+@pytest.mark.django_db
+def test_review_list_invalid_business_user_id_returns_400():
+    reviewer = create_user('reviewer')
+
+    response = authenticated_client(reviewer).get(
+        f'{reverse("review-list")}?business_user_id=abc',
+    )
+
+    assert response.status_code == 400
+    assert 'business_user_id' in response.data
+
+
+@pytest.mark.django_db
+def test_review_list_invalid_reviewer_id_returns_400():
+    reviewer = create_user('reviewer')
+
+    response = authenticated_client(reviewer).get(
+        f'{reverse("review-list")}?reviewer_id=abc',
+    )
+
+    assert response.status_code == 400
+    assert 'reviewer_id' in response.data
+
+
+@pytest.mark.django_db
+def test_review_list_invalid_ordering_returns_400():
+    reviewer = create_user('reviewer')
+
+    response = authenticated_client(reviewer).get(
+        f'{reverse("review-list")}?ordering=description',
+    )
+
+    assert response.status_code == 400
+    assert 'ordering' in response.data
 
 
 @pytest.mark.django_db

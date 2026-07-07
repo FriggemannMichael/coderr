@@ -11,7 +11,17 @@ class RegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     repeated_password = serializers.CharField(write_only=True)
-    type = serializers.CharField(write_only=True)
+    type = serializers.ChoiceField(
+        choices=UserProfile.ProfileType.choices,
+        write_only=True,
+    )
+
+    def validate_username(self, value):
+        if get_user_model().objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                'A user with that username already exists.'
+            )
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs['repeated_password']:
@@ -21,6 +31,7 @@ class RegistrationSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
+        validated_data.pop('repeated_password', None)
         user = get_user_model().objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],

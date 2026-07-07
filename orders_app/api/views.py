@@ -23,7 +23,9 @@ class OrderViewSet(ModelViewSet):
             return queryset
         if self._is_customer(user):
             return queryset.filter(customer_user=user)
-        return queryset.filter(business_user=user)
+        if self._is_business(user):
+            return queryset.filter(business_user=user)
+        return queryset.none()
 
     def get_permissions(self):
         if self.action == 'create':
@@ -38,6 +40,12 @@ class OrderViewSet(ModelViewSet):
         return UserProfile.objects.filter(
             user=user,
             type=UserProfile.ProfileType.CUSTOMER,
+        ).exists()
+
+    def _is_business(self, user):
+        return UserProfile.objects.filter(
+            user=user,
+            type=UserProfile.ProfileType.BUSINESS,
         ).exists()
 
 
