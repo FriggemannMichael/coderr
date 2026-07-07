@@ -427,3 +427,53 @@ def test_completed_order_count_unknown_business_user_returns_404():
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_business_user_cannot_update_another_users_order():
+    customer_user = create_user('customer_user')
+    owner = create_user('business_user', UserProfile.ProfileType.BUSINESS)
+    other_business = create_user(
+        'other_business_user',
+        UserProfile.ProfileType.BUSINESS,
+    )
+    order = create_order(customer_user, owner)
+
+    response = authenticated_client(other_business).patch(
+        reverse('order-detail', kwargs={'pk': order.id}),
+        data={'status': 'completed'},
+        format='json',
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_order_list_does_not_crash_for_user_without_profile():
+    user = get_user_model().objects.create_user(
+        username='no_profile_user',
+        email='no_profile@example.com',
+        password='StrongPass123!',
+    )
+
+    response = authenticated_client(user).get(reverse('order-list'))
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_order_create_forbidden_for_user_without_profile():
+    user = get_user_model().objects.create_user(
+        username='no_profile_user',
+        email='no_profile@example.com',
+        password='StrongPass123!',
+    )
+    offer_detail = create_offer_detail()
+
+    response = authenticated_client(user).post(
+        reverse('order-list'),
+        data={'offer_detail_id': offer_detail.id},
+        format='json',
+    )
+
+    assert response.status_code == 403

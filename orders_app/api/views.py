@@ -7,7 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from orders_app.models import Order
 from profiles_app.models import UserProfile
 
-from .permissions import IsBusinessUser, IsCustomerUser
+from .permissions import IsBusinessUser, IsCustomerUser, IsOrderBusinessOwner
 from .serializers import OrderSerializer
 
 
@@ -19,9 +19,9 @@ class OrderViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = Order.objects.select_related('customer_user', 'business_user')
         user = self.request.user
-        if user.is_staff:
+        if self.action in ['update', 'partial_update', 'destroy'] or user.is_staff:
             return queryset
-        if user.profile.type == UserProfile.ProfileType.CUSTOMER:
+        if self._is_customer(user):
             return queryset.filter(customer_user=user)
         return queryset.filter(business_user=user)
 
@@ -29,10 +29,16 @@ class OrderViewSet(ModelViewSet):
         if self.action == 'create':
             return [IsAuthenticated(), IsCustomerUser()]
         if self.action in ['update', 'partial_update']:
-            return [IsAuthenticated(), IsBusinessUser()]
+            return [IsAuthenticated(), IsBusinessUser(), IsOrderBusinessOwner()]
         if self.action == 'destroy':
             return [IsAuthenticated(), IsAdminUser()]
         return [IsAuthenticated()]
+
+    def _is_customer(self, user):
+        return UserProfile.objects.filter(
+            user=user,
+            type=UserProfile.ProfileType.CUSTOMER,
+        ).exists()
 
 
 class BaseOrderCountView(APIView):
