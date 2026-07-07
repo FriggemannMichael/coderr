@@ -138,6 +138,20 @@ def test_order_create_requires_offer_detail_id():
 
 
 @pytest.mark.django_db
+def test_order_create_invalid_offer_detail_id_returns_400():
+    customer_user = create_user()
+
+    response = authenticated_client(customer_user).post(
+        reverse('order-list'),
+        data={'offer_detail_id': 'abc'},
+        format='json',
+    )
+
+    assert response.status_code == 400
+    assert 'offer_detail_id' in response.data
+
+
+@pytest.mark.django_db
 def test_order_create_unknown_offer_detail_returns_404():
     customer_user = create_user()
 
@@ -180,7 +194,32 @@ def test_customer_user_can_list_only_own_orders():
 
     assert response.status_code == 200
     assert len(response.data) == 1
+    assert set(response.data[0]) == {
+        'id',
+        'customer_user',
+        'business_user',
+        'title',
+        'revisions',
+        'delivery_time_in_days',
+        'price',
+        'features',
+        'offer_type',
+        'status',
+        'created_at',
+        'updated_at',
+    }
     assert response.data[0]['id'] == own_order.id
+    assert response.data[0]['customer_user'] == customer_user.id
+    assert response.data[0]['business_user'] == offer_detail.offer.user.id
+    assert response.data[0]['title'] == 'Basic Logo'
+    assert response.data[0]['revisions'] == 3
+    assert response.data[0]['delivery_time_in_days'] == 5
+    assert response.data[0]['price'] == 150.0
+    assert response.data[0]['features'] == ['Logo Design', 'Visitenkarten']
+    assert response.data[0]['offer_type'] == 'basic'
+    assert response.data[0]['status'] == Order.Status.IN_PROGRESS
+    assert response.data[0]['created_at'].endswith('Z')
+    assert response.data[0]['updated_at'].endswith('Z')
 
 
 @pytest.mark.django_db
@@ -272,6 +311,25 @@ def test_order_status_update_rejects_invalid_status():
 
 
 @pytest.mark.django_db
+def test_order_status_update_rejects_unallowed_fields():
+    customer_user = create_user('customer_user')
+    business_user = create_user('business_user', UserProfile.ProfileType.BUSINESS)
+    order = create_order(customer_user, business_user)
+
+    response = authenticated_client(business_user).patch(
+        reverse('order-detail', kwargs={'pk': order.id}),
+        data={'status': 'completed', 'title': 'Changed Title'},
+        format='json',
+    )
+
+    order.refresh_from_db()
+    assert response.status_code == 400
+    assert 'title' in response.data
+    assert order.title == 'Logo Design'
+    assert order.status == Order.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
 def test_order_status_update_unknown_returns_404():
     business_user = create_user('business_user', UserProfile.ProfileType.BUSINESS)
 
@@ -296,6 +354,7 @@ def test_staff_user_can_delete_order():
     )
 
     assert response.status_code == 204
+    assert response.content == b''
     assert not Order.objects.filter(id=order.id).exists()
 
 
@@ -449,16 +508,19 @@ def test_business_user_cannot_update_another_users_order():
 
 
 @pytest.mark.django_db
-def test_order_list_does_not_crash_for_user_without_profile():
+def test_order_list_returns_empty_list_for_user_without_profile():
     user = get_user_model().objects.create_user(
         username='no_profile_user',
         email='no_profile@example.com',
         password='StrongPass123!',
     )
+    business_user = create_user('business_user', UserProfile.ProfileType.BUSINESS)
+    create_order(user, business_user)
 
     response = authenticated_client(user).get(reverse('order-list'))
 
     assert response.status_code == 200
+    assert response.data == []
 
 
 @pytest.mark.django_db
