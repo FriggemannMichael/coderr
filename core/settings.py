@@ -172,6 +172,12 @@ STATIC_URL = os.environ.get('DJANGO_STATIC_URL', 'static/')
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
+# Uploaded media (offer images, profile files).
+
+MEDIA_URL = os.environ.get('DJANGO_MEDIA_URL', 'media/')
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT') or BASE_DIR / 'media'
+
+
 # Deployment behind a reverse proxy (Nginx/Cloudflare) that terminates HTTPS.
 # FORCE_SCRIPT_NAME lets the app be served under a sub-path (e.g. /backend) so
 # reverse()-generated URLs include that prefix.
