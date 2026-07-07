@@ -168,13 +168,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = os.environ.get('DJANGO_STATIC_URL', 'static/')
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Deployment behind a reverse proxy (Nginx/Cloudflare) that terminates HTTPS.
+# FORCE_SCRIPT_NAME lets the app be served under a sub-path (e.g. /backend) so
+# reverse()-generated URLs include that prefix.
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+FORCE_SCRIPT_NAME = os.environ.get('DJANGO_FORCE_SCRIPT_NAME') or None
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True

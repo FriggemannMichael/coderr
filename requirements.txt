@@ -8,6 +8,7 @@ django-stubs==6.0.6
 django-stubs-ext==6.0.6
 djangorestframework==3.17.1
 djangorestframework-stubs==3.17.0
+gunicorn==26.0.0
 iniconfig==2.3.0
 packaging==26.2
 Pillow==12.2.0

@@ -1,3 +1,4 @@
+from django.urls import reverse
 from rest_framework import serializers
 
 from offers_app.models import Offer, OfferDetail
@@ -32,7 +33,7 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
         ]
 
     def get_url(self, obj):
-        return f'/api/offerdetails/{obj.id}/'
+        return reverse('offerdetail-detail', kwargs={'pk': obj.id})
 
 
 class UserDetailsSerializer(serializers.Serializer):
