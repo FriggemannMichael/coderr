@@ -111,12 +111,13 @@ user can be created with:
 
 ## Project structure
 
-- `core/` — Django project configuration and the base-info endpoint
+- `core/` — Django project configuration
 - `auth_app/` — registration and login
 - `profiles_app/` — user profiles
 - `offers_app/` — offers and offer details
 - `orders_app/` — orders and order counters
 - `reviews_app/` — reviews and ratings
+- `base_info_app/` — aggregated platform statistics (base-info endpoint)
 - `docs/` — endpoint reference and delivery checklist
 
 ## Running checks
