@@ -343,6 +343,19 @@ def test_order_status_update_unknown_returns_404():
 
 
 @pytest.mark.django_db
+def test_order_status_update_unknown_returns_404_for_non_business_user():
+    customer_user = create_user('customer_user')
+
+    response = authenticated_client(customer_user).patch(
+        reverse('order-detail', kwargs={'pk': 999999}),
+        data={'status': 'completed'},
+        format='json',
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_staff_user_can_delete_order():
     customer_user = create_user('customer_user')
     business_user = create_user('business_user', UserProfile.ProfileType.BUSINESS)

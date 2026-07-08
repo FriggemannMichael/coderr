@@ -7,7 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from orders_app.models import Order
 from profiles_app.models import UserProfile
 
-from .permissions import IsBusinessUser, IsCustomerUser, IsOrderBusinessOwner
+from .permissions import IsCustomerUser, IsOrderBusinessOwner
 from .serializers import OrderSerializer
 
 
@@ -31,7 +31,7 @@ class OrderViewSet(ModelViewSet):
         if self.action == 'create':
             return [IsAuthenticated(), IsCustomerUser()]
         if self.action in ['update', 'partial_update']:
-            return [IsAuthenticated(), IsBusinessUser(), IsOrderBusinessOwner()]
+            return [IsAuthenticated(), IsOrderBusinessOwner()]
         if self.action == 'destroy':
             return [IsAuthenticated(), IsAdminUser()]
         return [IsAuthenticated()]
