@@ -13,16 +13,6 @@ class IsCustomerUser(BasePermission):
         ).exists()
 
 
-class IsBusinessUser(BasePermission):
-    """Allow access only to authenticated business users."""
-
-    def has_permission(self, request, view):
-        return UserProfile.objects.filter(
-            user=request.user,
-            type=UserProfile.ProfileType.BUSINESS,
-        ).exists()
-
-
 class IsOrderBusinessOwner(BasePermission):
     """Allow order changes only for the assigned business user."""
 
