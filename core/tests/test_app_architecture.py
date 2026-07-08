@@ -11,6 +11,7 @@ EXPECTED_PROJECT_APPS = [
     'offers_app',
     'orders_app',
     'reviews_app',
+    'base_info_app',
 ]
 
 EXPECTED_API_URL_MODULES = [
