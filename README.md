@@ -8,38 +8,6 @@ the platform exposes aggregated statistics for its landing page.
 It is a Django REST Framework API with token authentication, built to be
 consumed by the Coderr frontend.
 
-## Live demo
-
-A running instance (frontend + API) is available at
-**https://coderr.friggemann.eu**. The API is served under the `/backend/` path
-(e.g. `https://coderr.friggemann.eu/backend/api/base-info/`).
-
-## Features
-
-- **Authentication** — registration and login returning an auth token; users
-  register as either a `customer` or a `business` account.
-- **Profiles** — retrieve and update user profiles; list business and customer
-  profiles.
-- **Offers** — business users create offers with three detail tiers
-  (basic/standard/premium); public, paginated listing with filtering, search,
-  and ordering.
-- **Orders** — customers create orders from an offer detail; business users
-  update order status; order counters per business user.
-- **Reviews** — customers review business users (one review per business),
-  editable and deletable by their author.
-- **Base info** — aggregated platform statistics (review count, average rating,
-  business profile count, offer count).
-
-The full endpoint reference lives in [docs/endpoints.md](docs/endpoints.md).
-
-## Tech stack
-
-- Python 3.12 or newer
-- Django and Django REST Framework
-- DRF token authentication
-- SQLite for local development
-- Ruff (lint and format) and pytest (tests and coverage)
-
 ## Setup
 
 Create and activate a virtual environment:
@@ -86,6 +54,38 @@ Run the development server:
 
 The local API is available at `http://127.0.0.1:8000/`, and the Django admin at
 `http://127.0.0.1:8000/admin/`.
+
+## Live demo
+
+A running instance (frontend + API) is available at
+**https://coderr.friggemann.eu**. The API is served under the `/backend/` path
+(e.g. `https://coderr.friggemann.eu/backend/api/base-info/`).
+
+## Features
+
+- **Authentication** — registration and login returning an auth token; users
+  register as either a `customer` or a `business` account.
+- **Profiles** — retrieve and update user profiles; list business and customer
+  profiles.
+- **Offers** — business users create offers with three detail tiers
+  (basic/standard/premium); public, paginated listing with filtering, search,
+  and ordering.
+- **Orders** — customers create orders from an offer detail; business users
+  update order status; order counters per business user.
+- **Reviews** — customers review business users (one review per business),
+  editable and deletable by their author.
+- **Base info** — aggregated platform statistics (review count, average rating,
+  business profile count, offer count).
+
+The full endpoint reference lives in [docs/endpoints.md](docs/endpoints.md).
+
+## Tech stack
+
+- Python 3.12 or newer
+- Django and Django REST Framework
+- DRF token authentication
+- SQLite for local development
+- Ruff (lint and format) and pytest (tests and coverage)
 
 ## User types and authentication
 
