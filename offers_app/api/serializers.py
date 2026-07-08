@@ -84,6 +84,7 @@ class OfferSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        """Require the full detail set when creating a new offer."""
         if self.instance is None and 'details' not in attrs:
             raise serializers.ValidationError(
                 {
@@ -93,6 +94,7 @@ class OfferSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def validate_details(self, value):
+        """Enforce exactly one basic/standard/premium detail on create."""
         if self.instance is not None:
             return self._validate_update_details(value)
 
@@ -105,6 +107,7 @@ class OfferSerializer(serializers.ModelSerializer):
         return value
 
     def _validate_update_details(self, value):
+        """Ensure updated details reference offer types that already exist."""
         existing_types = set(self.instance.details.values_list('offer_type', flat=True))
         for detail in value:
             offer_type = detail.get('offer_type')
@@ -119,6 +122,7 @@ class OfferSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        """Create the offer for the request user with its nested details."""
         details_data = validated_data.pop('details', None)
         if 'image' in validated_data and validated_data['image'] is None:
             validated_data['image'] = ''
@@ -130,6 +134,7 @@ class OfferSerializer(serializers.ModelSerializer):
         return offer
 
     def update(self, instance, validated_data):
+        """Update the offer and apply changes to its existing details."""
         details_data = validated_data.pop('details', [])
         if 'image' in validated_data and validated_data['image'] is None:
             validated_data['image'] = ''
@@ -138,10 +143,12 @@ class OfferSerializer(serializers.ModelSerializer):
         return offer
 
     def _create_details(self, offer, details_data):
+        """Create the nested detail rows for a newly created offer."""
         for detail_data in details_data:
             OfferDetail.objects.create(offer=offer, **detail_data)
 
     def _update_details(self, offer, details_data):
+        """Apply field updates to each existing detail by offer type."""
         for detail_data in details_data:
             offer_type = detail_data.pop('offer_type')
             detail = offer.details.get(offer_type=offer_type)

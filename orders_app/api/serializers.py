@@ -46,6 +46,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return float(obj.price)
 
     def validate(self, attrs):
+        """Restrict updates to the status field only."""
         if self.instance is not None:
             invalid_fields = set(self.initial_data) - {'status'}
             if invalid_fields:
@@ -55,6 +56,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
+        """Create an order by copying the referenced offer detail."""
         offer_detail = self._get_offer_detail(validated_data)
         return Order.objects.create(
             customer_user=self.context['request'].user,
@@ -68,5 +70,6 @@ class OrderSerializer(serializers.ModelSerializer):
         )
 
     def _get_offer_detail(self, validated_data):
+        """Fetch the referenced offer detail or raise a 404."""
         queryset = OfferDetail.objects.select_related('offer', 'offer__user')
         return get_object_or_404(queryset, id=validated_data.pop('offer_detail_id'))

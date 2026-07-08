@@ -17,6 +17,7 @@ class RegistrationSerializer(serializers.Serializer):
     )
 
     def validate_username(self, value):
+        """Reject a username that is already taken."""
         if get_user_model().objects.filter(username=value).exists():
             raise serializers.ValidationError(
                 'A user with that username already exists.'
@@ -24,6 +25,7 @@ class RegistrationSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
+        """Confirm the password and its repetition match."""
         if attrs['password'] != attrs['repeated_password']:
             raise serializers.ValidationError(
                 {'repeated_password': ['Passwords do not match.']}
@@ -31,6 +33,7 @@ class RegistrationSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
+        """Create the user and its matching profile from validated input."""
         validated_data.pop('repeated_password', None)
         user = get_user_model().objects.create_user(
             username=validated_data['username'],
@@ -51,6 +54,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
+        """Authenticate the credentials and attach the resolved user."""
         user = authenticate(
             username=attrs['username'],
             password=attrs['password'],
