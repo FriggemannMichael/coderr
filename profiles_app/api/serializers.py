@@ -32,6 +32,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
+        """Update the profile and sync the email onto the related user."""
         user_data = validated_data.pop('user', {})
         if 'email' in user_data:
             instance.user.email = user_data['email']

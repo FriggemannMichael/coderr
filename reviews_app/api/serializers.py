@@ -26,6 +26,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        """Check the target is a business user and not yet reviewed."""
         business_user = attrs.get('business_user')
         reviewer = self.context['request'].user
         self._validate_business_user(business_user)
@@ -33,12 +34,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
+        """Create the review with the request user as its reviewer."""
         return Review.objects.create(
             reviewer=self.context['request'].user,
             **validated_data,
         )
 
     def _validate_business_user(self, business_user):
+        """Reject a review target that is not a business user."""
         is_business_user = UserProfile.objects.filter(
             user=business_user,
             type=UserProfile.ProfileType.BUSINESS,
@@ -49,6 +52,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             )
 
     def _validate_unique_review(self, business_user, reviewer):
+        """Reject a second review by the same reviewer for the business."""
         if Review.objects.filter(
             business_user=business_user,
             reviewer=reviewer,
